@@ -1,8 +1,17 @@
-import Image from "next/image";
-import LandingPage from "./pages/LandingPage";
+import Hero from "./components/Hero";
+import TrustedBy from "./components/TrustedBy";
+import Features from "./components/Features";
+import HowItWorks from "./components/HowItWorks";
+import Metrics from "./components/Metrics";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <LandingPage></LandingPage>
+    <>
+      <Hero />
+      <TrustedBy />
+      <Features />
+      <HowItWorks />
+      <Metrics />
+    </>
   );
 }
