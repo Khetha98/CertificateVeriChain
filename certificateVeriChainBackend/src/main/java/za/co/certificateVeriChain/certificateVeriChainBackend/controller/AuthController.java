@@ -12,13 +12,13 @@ import za.co.certificateVeriChain.certificateVeriChainBackend.model.User;
 @RestController
 public class AuthController {
 
-    @RequestMapping
+
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody User user){
         return ResponseEntity.ok("successfully registered");
     }
 
-    @RequestMapping
+
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody User user){
         return ResponseEntity.ok("successfully logged in");
