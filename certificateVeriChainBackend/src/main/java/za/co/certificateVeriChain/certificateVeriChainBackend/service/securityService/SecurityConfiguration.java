@@ -18,6 +18,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import za.co.certificateVeriChain.certificateVeriChainBackend.configuration.JwtAuthenticationFilter;
+import za.co.certificateVeriChain.certificateVeriChainBackend.model.User;
+import za.co.certificateVeriChain.certificateVeriChainBackend.service.CustomUserDetailsService;
 
 import java.util.List;
 
@@ -65,16 +67,5 @@ public class SecurityConfiguration {
         return source;
     }
 
-    @Bean
-    public UserDetailsService userDetailsService() {
-        // Your implementation of UserDetailsService
-        return new CustomUserDetailsService();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        // e.g., return new BCryptPasswordEncoder();
-        return new BCryptPasswordEncoder();
-    }
 }
 

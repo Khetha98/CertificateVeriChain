@@ -54,8 +54,8 @@ public class ApplicationConfiguration {
             UserDetailsService userDetailsService,
             PasswordEncoder passwordEncoder) {
 
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService); // This method is still available on the concrete class
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider( userDetailsService);
+        //authProvider.setUserDetailsService(userDetailsService); // This method is still available on the concrete class
         authProvider.setPasswordEncoder(passwordEncoder);
         return authProvider;
     }
