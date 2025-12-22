@@ -7,7 +7,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
 
   async function login() {
-    const res = await fetch("http://localhost:8080/api/auth/login", {
+    const res = await fetch("http://localhost:9090/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -36,7 +36,9 @@ export default function LoginPage() {
         onChange={e => setPassword(e.target.value)}
       />
 
-      <button className="bg-blue-600 text-white px-4 py-2 w-full">
+      <button className="bg-blue-600 text-white px-4 py-2 w-full"
+        onClick={login}
+      >
         Sign In
       </button>
     </div>

@@ -13,14 +13,21 @@ export default function Header() {
         </Link>
 
         <nav className="flex gap-6 text-sm">
-          <Link href="/VerificationSystemPage">Verification</Link>
-          <Link href="/DigiLedgerPage">DigiLedger</Link>
-          <Link href="/ReputationScoresPage">Reputation</Link>
-          <Link href="/FundMePage">Fund</Link>
+          <Link href="/VerificationSystemPage">Verify</Link>
+          <Link href="/InstitutionsPage">Institutions</Link>
+          <Link href="/SecurityPage">Security</Link>
+          <Link href="/PricingPage">Pricing</Link>
           <Link href="/ContactUsPage" className="font-medium text-blue-600">
             Contact
           </Link>
+          <Link href="/auth/register" className="font-medium text-blue-600">
+            Register
+          </Link>
+          <Link href="/auth/login" className="font-medium text-blue-600">
+            Login
+          </Link>
         </nav>
+
       </div>
     </header>
   );

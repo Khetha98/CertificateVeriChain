@@ -16,8 +16,8 @@ export default function Hero() {
           </p>
 
           <div className="mt-6 flex gap-4">
-            <Link href="/ContactUsPage" className="bg-blue-600 text-white px-6 py-3 rounded">
-              Request Demo
+            <Link href="/auth/register" className="bg-blue-600 text-white px-6 py-3 rounded">
+              Get Started
             </Link>
             <Link href="/VerificationSystemPage" className="border px-6 py-3 rounded">
               Verify Certificate
