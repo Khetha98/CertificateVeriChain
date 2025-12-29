@@ -15,7 +15,7 @@ export default function VerificationSystemPage() {
   }
 
   return (
-    <section className="max-w-5xl mx-auto p-10">
+    <section className="max-w-5xl mx-auto ">
       <h1 className="text-3xl font-bold mb-6">Verify Certificate</h1>
 
       <input
