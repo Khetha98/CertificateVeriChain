@@ -21,10 +21,13 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String email;
+    @Column(nullable = false)
     private String fullName;
     private String role;
     private String status;
     private String dateJoined;
+    private String password;
+
 
     @ManyToOne
     @JoinColumn(name = "organization_id")

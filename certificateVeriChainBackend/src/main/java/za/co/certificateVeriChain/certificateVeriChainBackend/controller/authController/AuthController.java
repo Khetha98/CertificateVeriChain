@@ -6,25 +6,42 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.request.LoginUserDto;
+import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.request.RegisterUserDto;
+import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.response.LoginResponse;
 import za.co.certificateVeriChain.certificateVeriChainBackend.model.User;
 import za.co.certificateVeriChain.certificateVeriChainBackend.service.AuthService;
+import za.co.certificateVeriChain.certificateVeriChainBackend.service.JWTService.JwtService;
 
 @Controller
 @RestController
 public class AuthController {
-    @Autowired
-    AuthService authService;
+    private final JwtService jwtService;
 
+    private final AuthService authenticationService;
 
-    @PostMapping("/api/auth/register")
-    public ResponseEntity<String> register(@RequestBody User user){
-        return ResponseEntity.ok(authService.registerService());
+    public AuthController(JwtService jwtService, AuthService authenticationService) {
+        this.jwtService = jwtService;
+        this.authenticationService = authenticationService;
     }
 
+    @PostMapping("/signup")
+    public ResponseEntity<User> register(@RequestBody RegisterUserDto registerUserDto) {
+        User registeredUser = authenticationService.register(registerUserDto);
 
-    @PostMapping("/api/auth/login")
-    public ResponseEntity<String> login(@RequestBody User user){
+        return ResponseEntity.ok(registeredUser);
+    }
 
-        return ResponseEntity.ok(authService.loginService());
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginUserDto loginUserDto) {
+        User authenticatedUser = authenticationService.authenticate(loginUserDto);
+
+        String jwtToken = jwtService.generateToken(authenticatedUser);
+
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setToken(jwtToken);
+        loginResponse.setExpiresIn(jwtService.getExpirationTime());
+
+        return ResponseEntity.ok(loginResponse);
     }
 }
