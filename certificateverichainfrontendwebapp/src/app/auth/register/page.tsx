@@ -11,7 +11,7 @@ export default function RegisterPage() {
   });
 
   async function register() {
-    await fetch("http://localhost:9090/api/auth/register-institution", {
+    await fetch("http://localhost:9090/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
