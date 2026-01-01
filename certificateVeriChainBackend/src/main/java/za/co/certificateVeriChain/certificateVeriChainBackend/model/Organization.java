@@ -7,21 +7,29 @@ import lombok.ToString;
 
 
 import java.util.List;
-
 @Entity
 @Getter
 @Setter
 @ToString
 public class Organization {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
+
+    @Column(unique = true)
+    private String registrationNumber;
+
     private String type;
     private String logoUrl;
     private String address;
     private String phone;
     private String website;
+
+    private String status;
+
     private String createdAt;
     private String updatedAt;
 
@@ -33,5 +41,5 @@ public class Organization {
 
     @OneToMany(mappedBy = "organization", cascade = CascadeType.ALL)
     private List<Certificate> certificates;
-
 }
+

@@ -7,9 +7,10 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class RegisterUserDto {
+public class RegisterInstitutionDto {
     private String email;
     private String password;
-    private String fullName;
+    private String institutionName;
+    private String registrationNumber;
 
 }

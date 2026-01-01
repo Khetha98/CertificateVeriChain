@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.request.LoginUserDto;
-import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.request.RegisterUserDto;
+import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.request.RegisterInstitutionDto;
 import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.response.LoginResponse;
 import za.co.certificateVeriChain.certificateVeriChainBackend.model.User;
 import za.co.certificateVeriChain.certificateVeriChainBackend.service.AuthService;
@@ -27,8 +27,8 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<User> register(@RequestBody RegisterUserDto registerUserDto) {
-        User registeredUser = authenticationService.register(registerUserDto);
+    public ResponseEntity<User> register(@RequestBody RegisterInstitutionDto registerInstitutionDto) {
+        User registeredUser = authenticationService.register(registerInstitutionDto);
 
         return ResponseEntity.ok(registeredUser);
     }
