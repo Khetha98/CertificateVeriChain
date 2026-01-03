@@ -20,16 +20,23 @@ public class CardanoCliService {
         Files.createDirectories(WORKDIR);
     }
 
-    public Path buildTransaction(Path metadataFile) {
+    public Path buildTransaction(
+            String txHash,
+            int txIndex,
+            String senderAddr,
+            Path metadataFile
+    ) {
         try {
             Path unsignedTx = WORKDIR.resolve("tx.raw");
 
             ProcessBuilder pb = new ProcessBuilder(
-                    CLI, "transaction", "build-raw",
-                    "--tx-in", "<UTXO>#0",              // replace later
-                    "--tx-out", "<ADDR>+2000000",       // min ADA
+                    CLI, "transaction", "build",
+                    "--babbage-era",
+                    "--testnet-magic", "1",
+                    "--tx-in", txHash + "#" + txIndex,
+                    "--tx-out", senderAddr + "+2000000",
+                    "--change-address", senderAddr,
                     "--metadata-json-file", metadataFile.toString(),
-                    "--fee", "0",
                     "--out-file", unsignedTx.toString()
             );
 
@@ -37,9 +44,10 @@ public class CardanoCliService {
             return unsignedTx;
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to build transaction", e);
+            throw new RuntimeException("Failed to build tx", e);
         }
     }
+
 
     public Path signTransaction(Path unsignedTx) {
         try {

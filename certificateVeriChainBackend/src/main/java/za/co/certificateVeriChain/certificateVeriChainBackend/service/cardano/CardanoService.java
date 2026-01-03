@@ -1,39 +1,47 @@
 package za.co.certificateVeriChain.certificateVeriChainBackend.service.cardano;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.response.UtxoResponse;
 
 import java.nio.file.Path;
 
 @Service
 public class CardanoService {
 
-    private final MetadataService metadataService;
-    private final CardanoCliService cliService;
-    private final CardanoClient cardanoClient;
+    private static final String ISSUER_ADDRESS = "addr_test1...";
 
-    public CardanoService(
-            MetadataService metadataService,
-            CardanoCliService cliService,
-            CardanoClient cardanoClient
-    ) {
-        this.metadataService = metadataService;
-        this.cliService = cliService;
-        this.cardanoClient = cardanoClient;
-    }
+    @Autowired
+    MetadataService metadataService;
+    @Autowired
+    CardanoCliService cliService;
+    @Autowired
+    CardanoClient cardanoClient;
 
-    /**
-     * Mint = anchor certificate hash on Cardano
-     */
-    public Mono<String> mintCertificateHash(String certificateHash) {
+    public Mono<String> anchorHash(String certificateHash) {
 
-        Path metadataFile = metadataService.writeMetadataFile(certificateHash);
-        Path unsignedTx = cliService.buildTransaction(metadataFile);
-        Path signedTx = cliService.signTransaction(unsignedTx);
-        byte[] cbor = cliService.readSignedTransaction(signedTx);
+        Path metadata = metadataService.writeMetadataFile(certificateHash);
 
-        return cardanoClient.submitTransaction(cbor);
+        return cardanoClient.getUtxos(ISSUER_ADDRESS)
+                .flatMapMany(Flux::fromIterable)
+                .next()
+                .switchIfEmpty(Mono.<UtxoResponse>error(
+                        new IllegalStateException("Issuer address has no UTXOs")
+                ))
+                .map(utxo -> cliService.buildTransaction(
+                        utxo.getTx_hash(),
+                        utxo.getTx_index(),
+                        ISSUER_ADDRESS,
+                        metadata
+                ))
+                .map(cliService::signTransaction)
+                .map(cliService::readSignedTransaction)
+                .flatMap(cardanoClient::submitTransaction);
     }
 }
+
+
 
 

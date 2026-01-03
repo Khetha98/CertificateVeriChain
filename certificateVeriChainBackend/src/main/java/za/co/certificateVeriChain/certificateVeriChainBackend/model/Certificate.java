@@ -36,7 +36,7 @@ public class Certificate {
     private String txHash;
 
     /* 🔁 Lifecycle */
-    private String status;     // ACTIVE, REVOKED
+    private String status;     // ISSUED, REVOKED
     private String issuedAt;
 
     /* 🔍 Public verification */
