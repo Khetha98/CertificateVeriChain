@@ -1,9 +1,12 @@
 package za.co.certificateVeriChain.certificateVeriChainBackend.service.serviceImpl;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.request.LoginUserDto;
 import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.request.RegisterInstitutionDto;
 import za.co.certificateVeriChain.certificateVeriChainBackend.model.Organization;
@@ -11,6 +14,9 @@ import za.co.certificateVeriChain.certificateVeriChainBackend.model.User;
 import za.co.certificateVeriChain.certificateVeriChainBackend.repository.OrganizationRepository;
 import za.co.certificateVeriChain.certificateVeriChainBackend.repository.UserRepository;
 import za.co.certificateVeriChain.certificateVeriChainBackend.service.AuthService;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Service
 public class AuthServiceImpl implements AuthService
@@ -53,6 +59,8 @@ public class AuthServiceImpl implements AuthService
         user.setRole("INSTITUTION_ADMIN");
         user.setStatus("PENDING");
         user.setOrganization(org);
+        user.setDateJoined(LocalDateTime.now().toString());
+
 
         return userRepository.save(user);
     }
@@ -60,15 +68,22 @@ public class AuthServiceImpl implements AuthService
 
     @Override
     public User authenticate(LoginUserDto input) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        input.getEmail(),
-                        input.getPassword()
-                )
-        );
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            input.getEmail(),
+                            input.getPassword()
+                    )
+            );
 
-        return userRepository.findByEmail(input.getEmail())
-                .orElseThrow();
+            return userRepository.findByEmail(input.getEmail())
+                    .orElseThrow();
+        }catch(BadCredentialsException e){
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,   // ← correct status
+                    "Invalid email or password"
+            );
+        }
     }
 }
 
