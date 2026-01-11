@@ -1,5 +1,7 @@
 package za.co.certificateVeriChain.certificateVeriChainBackend.service.cardano;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -10,7 +12,7 @@ import java.util.List;
 @Service
 public class CardanoClient {
 
-    private static final String BLOCKFROST_KEY = "preprod_xxx";
+    private static final String BLOCKFROST_KEY = "preprodaXqyV7rVS0jrT9fOs6nckpd0IF2qe6mQ";
 
     private final WebClient webClient;
 
@@ -25,6 +27,14 @@ public class CardanoClient {
         return webClient.get()
                 .uri("/addresses/{address}/utxos", address)
                 .retrieve()
+                .onStatus(status -> status.is4xxClientError(), response ->
+                        response.bodyToMono(String.class)
+                                .flatMap(body -> Mono.<Throwable>error(new RuntimeException("Client error: " + body)))
+                )
+                .onStatus(status -> status.is5xxServerError(), response ->
+                        response.bodyToMono(String.class)
+                                .flatMap(body -> Mono.<Throwable>error(new RuntimeException("Server error: " + body)))
+                )
                 .bodyToFlux(UtxoResponse.class)
                 .collectList();
     }
@@ -36,6 +46,13 @@ public class CardanoClient {
                 .bodyValue(signedTx)
                 .retrieve()
                 .bodyToMono(String.class);
+    }
+
+    public Mono<JsonNode> getTransaction(String txHash) {
+        return webClient.get()
+                .uri("/txs/{hash}/metadata", txHash)
+                .retrieve()
+                .bodyToMono(JsonNode.class);
     }
 }
 

@@ -31,3 +31,14 @@ build/
 
 ### VS Code ###
 .vscode/
+
+issuer.addr
+issuer.skey
+issuer.vkey
+metadata.json
+
+./issuer.addr
+./issuer.skey
+./issuer.vkey
+./metadata.json
+

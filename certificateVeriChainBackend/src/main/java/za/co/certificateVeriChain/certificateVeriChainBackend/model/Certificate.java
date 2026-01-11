@@ -42,5 +42,9 @@ public class Certificate {
     /* 🔍 Public verification */
     @Column(nullable = false, unique = true)
     private String verificationCode;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "issued_by_user_id")
+    private User issuedBy;
 }
 

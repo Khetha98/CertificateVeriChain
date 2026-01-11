@@ -1,5 +1,6 @@
 package za.co.certificateVeriChain.certificateVeriChainBackend.service.serviceImpl;
 
+import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -43,14 +44,33 @@ public class AuthServiceImpl implements AuthService
 
 
     @Override
+    @Transactional
     public User register(RegisterInstitutionDto input) {
 
-        Organization org = new Organization();
-        org.setName(input.getInstitutionName());
-        org.setRegistrationNumber(input.getRegistrationNumber());
-        org.setStatus("PENDING");
+        Organization org =
+                organizationRepository.findByRegistrationNumber(input.getRegistrationNumber());
 
-        organizationRepository.save(org);
+        // FIRST TIME: create organization
+        if (org == null) {
+            org = new Organization();
+            org.setName(input.getInstitutionName());
+            org.setRegistrationNumber(input.getRegistrationNumber());
+            org.setStatus("PENDING");
+
+            organizationRepository.save(org);
+        }
+        // OPTIONAL SAFETY: prevent duplicate admins
+        else {
+            boolean adminExists = userRepository.existsByOrganizationAndRole(
+                    org, "INSTITUTION_ADMIN"
+            );
+
+            if (adminExists) {
+                throw new IllegalStateException(
+                        "Organization already has an admin. Invite users instead."
+                );
+            }
+        }
 
         User user = new User();
         user.setFullName(input.getInstitutionName() + " Admin");
@@ -61,9 +81,9 @@ public class AuthServiceImpl implements AuthService
         user.setOrganization(org);
         user.setDateJoined(LocalDateTime.now().toString());
 
-
         return userRepository.save(user);
     }
+
 
 
     @Override

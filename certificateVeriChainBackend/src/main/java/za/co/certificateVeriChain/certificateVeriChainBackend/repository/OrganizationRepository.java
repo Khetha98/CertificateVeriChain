@@ -5,7 +5,11 @@ import org.springframework.stereotype.Repository;
 import za.co.certificateVeriChain.certificateVeriChainBackend.model.Organization;
 
 import java.util.List;
+import java.util.Optional;
+
 @Repository
 public interface OrganizationRepository extends JpaRepository< Organization, Long> {
     List<Organization> findByStatus(String status);
+
+    Organization findByRegistrationNumber(String regNumber);
 }

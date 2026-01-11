@@ -1,6 +1,8 @@
 package za.co.certificateVeriChain.certificateVeriChainBackend.controller.verificationController;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -8,14 +10,16 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import za.co.certificateVeriChain.certificateVeriChainBackend.model.Certificate;
 import za.co.certificateVeriChain.certificateVeriChainBackend.repository.CertificateRepository;
+import za.co.certificateVeriChain.certificateVeriChainBackend.service.certificate.CertificateService;
 
 @RestController
 @RequestMapping
 public class VerificationController {
 
     CertificateRepository certificateRepository;
+    CertificateService certificateService;
 
-    @GetMapping("/verify/{code}")
+    /*@GetMapping("/verify/{code}")
     public Certificate verify(@PathVariable String code) {
         Certificate cert = certificateRepository
                 .findByVerificationCode(code)
@@ -26,6 +30,18 @@ public class VerificationController {
         }
 
         return cert;
+    }*/
+
+    @GetMapping("/verify/{uid}/pdf")
+    public ResponseEntity<byte[]> verifyPdf(@PathVariable String uid) {
+
+        byte[] pdf = certificateService.generateVerifiedCertificate(uid);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header("Content-Disposition", "inline; filename=certificate.pdf")
+                .body(pdf);
     }
+
 
 }

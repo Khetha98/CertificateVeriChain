@@ -14,15 +14,26 @@ public class UtxoResponse {
 
     private String tx_hash;
     private int tx_index;
-    private List<Amount> amount;
+    private List<AmountDto> amount;
 
-    @Getter
-    @Setter
-    @ToString
-    public static class Amount {
-        private String unit;
-        private String quantity;
-
+    public String getTx_hash() {
+        return tx_hash;
     }
 
+    public int getTx_index() {
+        return tx_index;
+    }
+
+    public List<AmountDto> getAmount() {
+        return amount;
+    }
+
+    // 🔥 ADD THIS METHOD
+    public long getLovelace() {
+        return amount.stream()
+                .filter(a -> "lovelace".equals(a.getUnit()))
+                .mapToLong(a -> Long.parseLong(a.getQuantity()))
+                .findFirst()
+                .orElse(0L);
+    }
 }
