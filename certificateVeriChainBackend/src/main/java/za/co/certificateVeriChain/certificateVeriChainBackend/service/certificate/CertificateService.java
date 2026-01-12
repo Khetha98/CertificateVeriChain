@@ -1,5 +1,6 @@
 package za.co.certificateVeriChain.certificateVeriChainBackend.service.certificate;
 
+import com.bloxbean.cardano.client.transaction.spec.Transaction;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.request.MintCertificateRequest;
 import za.co.certificateVeriChain.certificateVeriChainBackend.model.Certificate;
 import za.co.certificateVeriChain.certificateVeriChainBackend.model.CertificateTemplate;
@@ -27,6 +29,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 
 @Service
 public class CertificateService {
@@ -57,8 +60,6 @@ public class CertificateService {
             User issuer
     ) {
 
-        System.out.println("ISSUE CERTIFICATE CALLED");
-
         CertificateTemplate template = templateRepo
                 .findById(templateId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid template"));
@@ -75,6 +76,7 @@ public class CertificateService {
         cert.setIssuedAt(Instant.now().toString());
         cert.setStatus("PENDING_APPROVAL");
         cert.setVerificationCode(UUID.randomUUID().toString());
+
 
 
         List<User> orgUsers = userRepo.findByOrganizationId(
@@ -112,6 +114,7 @@ public class CertificateService {
                     "organizationId", cert.getOrganization().getId(),
                     "templateId", cert.getTemplate().getId()
             );
+            System.out.println("Canonicalizing certificate: " + data);
             return objectMapper.writeValueAsString(data);
         } catch (Exception e) {
             throw new RuntimeException("Failed to canonicalize certificate", e);
@@ -120,32 +123,36 @@ public class CertificateService {
 
     /** 🔐 anchor only after approvals */
     public void anchorToChain(Long certificateUid) {
-        System.out.println("ANCHOR START for uid=" + certificateUid);
-        Certificate cert = certificateRepository
-                .findByCertificateUid(certificateUid)
-                .orElseThrow();
+        Certificate cert = certificateRepository.findByCertificateUid(certificateUid)
+                .orElseThrow(() -> new IllegalArgumentException("Certificate not found"));
 
         if (!"APPROVED".equals(cert.getStatus())) {
             throw new IllegalStateException("Certificate not approved");
         }
 
-        // async anchor
-        //cardanoService.anchorHash(cert.getCertificateHash())
-                /*.subscribe(txHash -> {
-                    cert.setTxHash(txHash);
-                    cert.setStatus("ACTIVE");
-                    certificateRepository.save(cert);
-                });*/
-        cardanoService.anchorHash(cert.getCertificateHash())
-                .subscribe(txHash -> {
-                    cert.setTxHash(txHash);
-                    cert.setStatus("ACTIVE");
-                    certificateRepository.save(cert);
-                }, err -> {
-                    cert.setStatus("ANCHOR_FAILED");
-                    certificateRepository.save(cert);
-                });
+        try {
+            // Offload the reactive call to a boundedElastic thread pool to avoid deadlocks
+            String txHash = Mono.fromCallable(() ->
+                            cardanoService.anchorHash(cert.getCertificateHash())
+                                    .doOnNext(hash -> System.out.println("Transaction hash received: " + hash))
+                                    .doOnError(err -> System.err.println("TX submission failed: " + err.getMessage()))
+                                    .block()
+                    )
+                    .subscribeOn(Schedulers.boundedElastic())
+                    .block(); // Block safely on a separate thread
+
+            cert.setTxHash(txHash);
+            cert.setStatus("ACTIVE");
+            certificateRepository.save(cert);
+
+        } catch (Exception e) {
+            System.err.println("Anchor failed: " + e.getMessage());
+            cert.setStatus("ANCHOR_FAILED: " + e.getMessage());
+            certificateRepository.save(cert);
+        }
     }
+
+
 
     public byte[] generateCertificate(
             byte[] templatePdf,

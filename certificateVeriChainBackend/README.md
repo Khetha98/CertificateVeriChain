@@ -54,3 +54,7 @@ cardano-cli conway transaction submit \
 
 \\check if have enough tokens commamd
 cardano-cli query utxo --address $(cat issuer.addr) --testnet-magic 1
+
+
+\\run project via terminal
+mvn spring-boot:run

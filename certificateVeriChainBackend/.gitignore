@@ -36,9 +36,17 @@ issuer.addr
 issuer.skey
 issuer.vkey
 metadata.json
+payment.skey
+payment.vkey
+root.prv
+recovery-phrase.txt
 
 ./issuer.addr
 ./issuer.skey
 ./issuer.vkey
 ./metadata.json
+./payment.skey
+./payment.vkey
+./root.prv
+./recovery-phrase.txt
 

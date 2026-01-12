@@ -1,13 +1,13 @@
 package za.co.certificateVeriChain.certificateVeriChainBackend.service.cardano;
 
+import com.bloxbean.cardano.client.transaction.spec.Transaction;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.response.UtxoResponse;
 
-import java.nio.file.Path;
-import java.util.Comparator;
+import java.util.List;
 
 @Service
 public class CardanoService {
@@ -15,39 +15,36 @@ public class CardanoService {
     private static final String ISSUER_ADDRESS = "addr_test1vqhmymwkaqn5wl9yqdtnf667sxdzxuj603vjwrltxyl5ssqe76aa8";
 
     @Autowired
-    MetadataService metadataService;
+    private CardanoClient cardanoClient;
+
     @Autowired
-    CardanoCliService cliService;
+    private TxBuilderService txBuilderService;
+
     @Autowired
-    CardanoClient cardanoClient;
-    @Autowired
-    SigningService signingService;
+    private TransactionSigner transactionSigner;
 
     public Mono<String> anchorHash(String certificateHash) {
-        Path metadata = metadataService.writeMetadataFile(certificateHash);
+        String issuerAddress = transactionSigner.getAddress(); // ✅ get issuer.addr
 
-        return cardanoClient.getUtxos(ISSUER_ADDRESS)
-                .flatMapMany(Flux::fromIterable)
-                .sort(Comparator.comparingLong(UtxoResponse::getLovelace).reversed())
-                .filter(utxo -> utxo.getLovelace() >= 5_000_000)
-                .next()
-                .switchIfEmpty(Mono.error(new IllegalStateException("Issuer address has no UTXOs")))
-                .map(utxo -> cliService.buildTransaction(
-                        utxo.getTx_hash(),
-                        utxo.getTx_index(),
-                        ISSUER_ADDRESS,
-                        metadata
-                ))
-                .map(signingService::signTransaction)
-                .map(cliService::readSignedTransaction)
-                .flatMap(cardanoClient::submitTransaction)
-                .onErrorResume(ex ->
-                        Mono.just("ANCHOR_FAILED: " + ex.getMessage())
+        return cardanoClient.getCurrentSlot()
+                .flatMap(slot ->
+                        cardanoClient.getUtxos(issuerAddress)
+                                .flatMap(utxos -> {
+                                    if (utxos.isEmpty())
+                                        return Mono.error(new IllegalStateException("Issuer has no UTXOs"));
+
+                                    // Build TX
+                                    Transaction tx = txBuilderService.buildTx(utxos, issuerAddress, certificateHash, slot);
+                                    System.out.println("Unsigned TX: " + tx);
+
+                                    // Sign TX
+                                    byte[] signedBytes = transactionSigner.sign(tx);
+                                    System.out.println("Signed TX (hex): " + Hex.toHexString(signedBytes));
+
+                                    // Submit
+                                    return cardanoClient.submitTransaction(signedBytes);
+                                })
                 );
     }
 
 }
-
-
-
-

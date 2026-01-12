@@ -15,17 +15,15 @@ public class OnChainVerificationService {
     private final CertificateRepository certificateRepository;
 
     public Mono<TxVerifyResponse> verifyTx(String txHash) {
-
         Certificate cert = certificateRepository.findByTxHash(txHash)
                 .orElseThrow();
 
         return cardanoClient.getTransaction(txHash)
                 .map(meta -> {
-
-                    String onChainHash =
-                            meta.get("674")
-                                    .get("certificate_hash")
-                                    .asText();
+                    // Access metadata properly
+                    String onChainHash = meta.path("674")
+                            .path("certificate_hash")
+                            .asText();
 
                     TxVerifyResponse res = new TxVerifyResponse();
                     res.setTxHash(txHash);
