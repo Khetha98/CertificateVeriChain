@@ -2,32 +2,84 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
+import { useAuth } from "@/lib/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
+  const { loggedIn, logout } = useAuth();
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+
   return (
-    <header className=" bg-white">
+    <header className="bg-white border-b">
       <div className="max-w-7xl mx-auto flex items-center justify-between p-4">
         <Link href="/" className="flex items-center gap-2">
           <Image src="/logo.png" alt="CertificateVeriChain" width={36} height={36} />
           <span className="font-semibold text-lg">CertificateVeriChain</span>
         </Link>
 
-        <nav className="flex gap-6 text-sm">
+        <nav className="flex gap-6 text-sm items-center">
           <Link href="/VerificationSystemPage">Verify</Link>
           <Link href="/InstitutionsPage">Institutions</Link>
           <Link href="/SecurityPage">Security</Link>
           <Link href="/PricingPage">Pricing</Link>
-          <Link href="/ContactUsPage" className="font-medium">
-            Contact
-          </Link>
-          <Link href="/auth/register" className="font-medium text-blue-600">
-            Register
-          </Link>
-          <Link href="/auth/login" className="font-medium text-blue-600">
-            Login
-          </Link>
-        </nav>
+          <Link href="/ContactUsPage">Contact</Link>
 
+          {!loggedIn && (
+            <>
+              <Link href="/auth/register" className="font-medium text-blue-600">
+                Register
+              </Link>
+              <Link href="/auth/login" className="font-medium text-blue-600">
+                Login
+              </Link>
+            </>
+          )}
+
+          {loggedIn && (
+            <div className="relative">
+              <button
+                onClick={() => setOpen(o => !o)}
+                className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center"
+              >
+                U
+              </button>
+
+              {open && (
+                <div className="absolute right-0 mt-2 w-48 bg-white shadow rounded">
+                  <button
+                    onClick={() => router.push("/templates/create")}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  >
+                    Create Template
+                  </button>
+
+                  <button
+                    onClick={() => router.push("/mint")}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  >
+                    Mint Certificate
+                  </button>
+                  <button
+                      onClick={() => router.push("/approvals")}
+                      className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                    >
+                      Approvals
+                  </button>
+
+                  <button
+                    onClick={logout}
+                    className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+
+            </div>
+          )}
+        </nav>
       </div>
     </header>
   );
