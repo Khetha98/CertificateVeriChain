@@ -1,6 +1,6 @@
 export default function Footer() {
   return (
-    <footer className="border-t bg-gray-900 text-gray-300">
+    <footer className="border-t bg-gray-900 text-gray-300 ">
       <div className="max-w-7xl mx-auto p-8 grid md:grid-cols-3 gap-6 text-sm">
         <div>
           <h4 className="font-semibold text-white">CertificateVeriChain</h4>

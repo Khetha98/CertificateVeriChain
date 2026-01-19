@@ -11,16 +11,22 @@ import Footer from "./components/Footer";
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className="min-h-screen flex flex-col">
         <AuthProvider>
           <Header />
-          {children}
+
+          {/* Main content grows to fill space */}
+          <main className="flex-1">
+            {children}
+          </main>
+
           <Footer />
         </AuthProvider>
       </body>
     </html>
   );
 }
+
 
 /*export default function RootLayout({
   children,
