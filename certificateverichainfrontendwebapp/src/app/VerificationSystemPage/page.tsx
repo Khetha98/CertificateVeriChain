@@ -8,15 +8,20 @@ export default function VerificationSystemPage() {
 
   async function verify() {
     const res = await fetch(
-      `http://localhost:8080/api/verify/${certificateId}`
+      `http://localhost:9090/api/verify/${certificateId}`
     );
+
+    if (!res.ok) {
+      alert("Certificate not found or revoked");
+      return;
+    }
+
     const data = await res.json();
     setResult(data);
   }
 
   return (
-    
-    <section className="max-w-xl  p-10">
+    <section className="max-w-xl p-10">
       <h1 className="text-3xl font-bold mb-6">Verify Certificate</h1>
 
       <input
@@ -34,9 +39,32 @@ export default function VerificationSystemPage() {
       </button>
 
       {result && (
-        <pre className="mt-6 bg-gray-100 p-4 rounded">
-          {JSON.stringify(result, null, 2)}
-        </pre>
+        <>
+
+          <div className="mt-6 bg-gray-100 p-4 rounded">
+            <p>
+              <strong>Status:</strong>{" "}
+              {result.valid ? "✅ Valid" : "❌ Invalid"}
+            </p>
+            <p>
+              <strong>Message:</strong> {result.message}
+            </p>
+
+            {result.valid && (
+              <>
+                <p>
+                  <strong>Student:</strong> {result.studentName}
+                </p>
+                <p>
+                  <strong>Organization:</strong> {result.organizationName}
+                </p>
+                <p>
+                  <strong>Issued At:</strong> {result.issuedAt}
+                </p>
+              </>
+            )}
+          </div>
+        </>
       )}
     </section>
   );

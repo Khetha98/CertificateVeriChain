@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 
 type AuthContextType = {
   loggedIn: boolean;
-  login: (token: string) => void;
+  role?: string; // store role
+  login: (token: string, role: string) => void;
   logout: () => void;
   ready: boolean;
 };
+
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -23,8 +25,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setReady(true);
   }, []);
 
-  function login(token: string) {
+  function login(token: string, role: string) {
     localStorage.setItem("token", token);
+    localStorage.setItem("role", role);
     setLoggedIn(true);
   }
 
