@@ -36,10 +36,20 @@ export default function Header() {
   return (
     <header className="bg-white border-b">
       <div className="max-w-7xl mx-auto flex items-center justify-between p-4">
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo.png" alt="CertificateVeriChain" width={36} height={36} />
-          <span className="font-semibold text-lg">CertificateVeriChain</span>
-        </Link>
+      <div
+        onClick={() => {
+          if (loggedIn) {
+            router.push("/institutionDashboard");
+          } else {
+            router.push("/");
+          }
+        }}
+        className="flex items-center gap-2 cursor-pointer"
+      >
+        <Image src="/logo.png" alt="CertificateVeriChain" width={36} height={36} />
+        <span className="font-semibold text-lg">CertificateVeriChain</span>
+      </div>
+
 
         <nav className="flex gap-6 text-sm items-center">
           <Link href="/VerificationSystemPage">Verify</Link>
