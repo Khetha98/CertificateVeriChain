@@ -33,9 +33,9 @@ public interface ApprovalRepository
 
 
     Optional<GovernanceApproval>
-    findByCertificateUidAndApproverUserId(Long uid, Long userId);
+    findByCertificateUidAndApproverUserId(String uid, Long userId);
 
-    long countByCertificateUid(Long uid);
+    long countByCertificateUid(String uid);
 
-    long countByCertificateUidAndApprovedTrue(Long uid);
+    long countByCertificateUidAndApprovedTrue(String uid);
 }

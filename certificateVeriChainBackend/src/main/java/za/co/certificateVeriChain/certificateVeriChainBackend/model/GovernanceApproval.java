@@ -16,7 +16,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class GovernanceApproval {
 
-    public GovernanceApproval(Long certificateUid, Long approverUserId, boolean approved) {
+    public GovernanceApproval(String certificateUid, Long approverUserId, boolean approved) {
         this.certificateUid = certificateUid;
         this.approverUserId = approverUserId;
         this.approved = approved;
@@ -27,7 +27,7 @@ public class GovernanceApproval {
     private Long id;
 
     private String txHash;
-    private Long certificateUid;
+    private String certificateUid;
     private Long approverUserId;
     private boolean approved;
 }

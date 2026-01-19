@@ -1,6 +1,9 @@
 package za.co.certificateVeriChain.certificateVeriChainBackend.service.cardano;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -15,8 +18,11 @@ public class CardanoClient {
 
     private static final String BLOCKFROST_KEY =
             "preprodaXqyV7rVS0jrT9fOs6nckpd0IF2qe6mQ";
+    ObjectMapper objectMapper = new ObjectMapper();
 
     private final WebClient webClient;
+    private static final Logger log =
+            LoggerFactory.getLogger(CardanoClient.class);
 
     public CardanoClient(WebClient.Builder builder) {
         this.webClient = builder
@@ -78,7 +84,7 @@ public class CardanoClient {
 
 
 
-    /* ---------------- GET TRANSACTION METADATA ---------------- */
+    /* ---------------- GET TRANSACTION METADATA ----------------
     public Mono<JsonNode> getTransaction(String txHash) {
         return webClient.get()
                 .uri("/txs/{hash}/metadata", txHash)
@@ -90,5 +96,30 @@ public class CardanoClient {
                                 ))
                 )
                 .bodyToMono(JsonNode.class);
+    }*/
+
+    /* ---------------- GET TRANSACTION METADATA ---------------- */
+    public Mono<JsonNode> getTransaction(String txHash) {
+        return webClient.get()
+                .uri("/txs/{txHash}/metadata", txHash)
+                .retrieve()
+                .bodyToMono(String.class) // first get raw JSON as String
+                .flatMap(raw -> {
+                    log.info("RAW BLOCKFROST METADATA: {}", raw);
+                    try {
+                        // parse JSON into JsonNode
+                        JsonNode root = objectMapper.readTree(raw);
+
+                        // usually Blockfrost returns an array: take first element
+                        if (root.isArray() && root.size() > 0) {
+                            return Mono.just(root.get(0).path("json_metadata"));
+                        } else {
+                            return Mono.just(root);
+                        }
+                    } catch (Exception e) {
+                        log.error("Failed to parse JSON metadata", e);
+                        return Mono.error(e);
+                    }
+                });
     }
 }

@@ -3,6 +3,7 @@ package za.co.certificateVeriChain.certificateVeriChainBackend.controller.certif
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -52,8 +53,9 @@ public class CertificateMintingController {
         return ResponseEntity.ok(dtos);
     }
 
+    @PreAuthorize("hasRole('ISSUER')")
     @PostMapping("/{uid}/revoke")
-    public Mono<ResponseEntity<CertificateDto>> revoke(@PathVariable Long uid) {
+    public Mono<ResponseEntity<CertificateDto>> revoke(@PathVariable String uid) {
         return revocationService.revoke(uid)
                 .map(cert -> new CertificateDto(
                         cert.getCertificateUid(),
@@ -87,7 +89,7 @@ public class CertificateMintingController {
     }
 
     @PostMapping("/{uid}/approve")
-    public ResponseEntity<?> approve(@PathVariable Long uid, @AuthenticationPrincipal User user) {
+    public ResponseEntity<?> approve(@PathVariable String uid, @AuthenticationPrincipal User user) {
         Certificate cert = certificateRepository
                 .findByCertificateUid(uid)
                 .orElseThrow();
@@ -116,6 +118,22 @@ public class CertificateMintingController {
 
         return ResponseEntity.ok().build();
     }
+
+    @PreAuthorize("hasRole('ISSUER')")
+    @DeleteMapping("/{uid}")
+    public ResponseEntity<Void> deleteCertificate(@PathVariable String uid, @AuthenticationPrincipal User user) {
+        Certificate cert = certificateRepository.findByCertificateUid(uid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Certificate not found"));
+
+        // Optional: only allow deleting certificates from the issuer's organization
+        if (!cert.getOrganization().getId().equals(user.getOrganization().getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to delete this certificate");
+        }
+
+        certificateRepository.delete(cert);
+        return ResponseEntity.noContent().build();
+    }
+
 
 }
 

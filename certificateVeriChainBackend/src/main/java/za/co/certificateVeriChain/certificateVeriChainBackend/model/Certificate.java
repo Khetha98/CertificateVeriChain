@@ -16,7 +16,7 @@ public class Certificate {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private Long certificateUid;
+    private String certificateUid;
 
     @ManyToOne
     @JoinColumn(name = "organization_id", nullable = false)

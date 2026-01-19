@@ -1,9 +1,14 @@
 package za.co.certificateVeriChain.certificateVeriChainBackend.service.cardano;
 
 import com.bloxbean.cardano.client.transaction.spec.Transaction;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.bouncycastle.util.encoders.Hex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.response.UtxoResponse;
 
@@ -16,6 +21,9 @@ public class CardanoService {
 
     @Autowired
     private CardanoClient cardanoClient;
+
+    private static final Logger log =
+            LoggerFactory.getLogger(CardanoClient.class);
 
     @Autowired
     private TxBuilderService txBuilderService;
@@ -46,5 +54,33 @@ public class CardanoService {
                                 })
                 );
     }
+
+    public Mono<Boolean> verifyHashAgainstTx(String txHash, String expectedHash) {
+        return cardanoClient.getTransaction(txHash)
+                .map(metadata -> {
+                    String onChainHash = metadata.path("certificateHash").asText();
+                    if (onChainHash == null || onChainHash.isEmpty()) {
+                        log.warn("certificateHash not found in metadata");
+                        return false;
+                    }
+                    return onChainHash.equals(expectedHash);
+                });
+    }
+
+
+
+    private boolean metadataHasHash(JsonNode metadata, String certificateHash) {
+        if (metadata == null || metadata.isEmpty()) return false;
+
+        for (JsonNode entry : metadata) {
+            if (certificateHash.equals(entry.asText())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+
 
 }

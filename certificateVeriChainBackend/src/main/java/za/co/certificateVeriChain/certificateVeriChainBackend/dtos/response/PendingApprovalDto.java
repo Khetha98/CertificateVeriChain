@@ -2,14 +2,14 @@ package za.co.certificateVeriChain.certificateVeriChainBackend.dtos.response;
 
 public class PendingApprovalDto {
 
-    private Long certificateUid;
+    private String certificateUid;
     private String studentName;
     private String templateName;
     private String issuedAt;
     private String issuerName;
 
     public PendingApprovalDto(
-            Long certificateUid,
+            String certificateUid,
             String studentName,
             String templateName,
             String issuedAt,

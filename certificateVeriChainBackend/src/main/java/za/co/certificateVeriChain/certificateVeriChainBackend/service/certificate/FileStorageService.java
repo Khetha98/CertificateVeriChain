@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetUrlRequest;
@@ -51,21 +52,16 @@ public class FileStorageService {
                 RequestBody.fromBytes(file.getBytes())
         );
 
-        return "http://localhost:9000/" + BUCKET + "/" + key;
+        return key; // ✅ STORE KEY ONLY
     }
 
-    public byte[] download(String fileUrl) {
-        // example fileUrl:
-        // http://localhost:9000/certificate-templates/templates/uuid.pdf
 
-        String key = fileUrl.substring(fileUrl.indexOf("templates/"));
-
+    public byte[] download(String key) {
         return s3.getObject(
-                b -> b.bucket("certificate-templates").key(key),
-                software.amazon.awssdk.core.sync.ResponseTransformer.toBytes()
+                b -> b.bucket(BUCKET).key(key),
+                ResponseTransformer.toBytes()
         ).asByteArray();
     }
-
 
 }
 

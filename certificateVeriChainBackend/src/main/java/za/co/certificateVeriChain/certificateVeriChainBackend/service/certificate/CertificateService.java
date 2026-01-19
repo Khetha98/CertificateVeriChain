@@ -34,6 +34,7 @@ import java.util.UUID;
 @Service
 public class CertificateService {
 
+
     private final CardanoService cardanoService;
     private final ObjectMapper objectMapper;
     private final CertificateRepository certificateRepository;
@@ -66,13 +67,15 @@ public class CertificateService {
 
         Certificate cert = new Certificate();
         cert.setIssuedBy(issuer);
-        cert.setCertificateUid(System.currentTimeMillis());
+        cert.setCertificateUid(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         cert.setStudentName(studentName);
         cert.setOrganization(issuer.getOrganization());
         cert.setTemplate(template);
 
         String hash = DigestUtils.sha256Hex(canonicalize(cert));
-        cert.setCertificateHash(hash);
+        String cleanTxHash = hash.replace("\"", "").trim();
+        //certificate.setTxHash(cleanTxHash);
+        cert.setCertificateHash(cleanTxHash);
         cert.setIssuedAt(Instant.now().toString());
         cert.setStatus("PENDING_APPROVAL");
         cert.setVerificationCode(UUID.randomUUID().toString());
@@ -122,7 +125,7 @@ public class CertificateService {
     }
 
     /** 🔐 anchor only after approvals */
-    public void anchorToChain(Long certificateUid) {
+    public void anchorToChain(String certificateUid) {
         Certificate cert = certificateRepository.findByCertificateUid(certificateUid)
                 .orElseThrow(() -> new IllegalArgumentException("Certificate not found"));
 
@@ -201,7 +204,7 @@ public class CertificateService {
     public byte[] generateVerifiedCertificate(String uid) {
         try {
             Certificate cert = certificateRepository
-                    .findByCertificateUid(Long.parseLong(uid))
+                    .findByCertificateUid(uid)
                     .orElseThrow(() -> new IllegalArgumentException("Certificate not found"));
 
             if (!"ACTIVE".equals(cert.getStatus())) {

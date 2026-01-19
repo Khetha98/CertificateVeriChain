@@ -12,7 +12,7 @@ public class RevocationService {
 
     private final CertificateRepository certificateRepository;
 
-    public Mono<Certificate> revoke(Long uid) {
+    public Mono<Certificate> revoke(String uid) {
 
         Certificate cert =
                 certificateRepository.findByCertificateUid(uid)
