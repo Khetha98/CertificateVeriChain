@@ -9,8 +9,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
 import java.net.URI;
@@ -42,19 +41,30 @@ public class FileStorageService {
                 .build();
     }
 
-    public String uploadTemplate(MultipartFile file, Long orgId) throws IOException {
-        String key = "templates/" + orgId + "/" + UUID.randomUUID() + ".pdf";
+    public String uploadTemplate(MultipartFile file) {
+        String bucketName = "certificates"; // or use your @Value variable
 
-        s3.putObject(
-                PutObjectRequest.builder()
-                        .bucket(bucketName)
-                        .key(key)
-                        .contentType(file.getContentType())
-                        .build(),
-                RequestBody.fromBytes(file.getBytes())
-        );
+        // 1. Check if bucket exists, create if not
+        try {
+            s3.headBucket(HeadBucketRequest.builder().bucket(bucketName).build());
+        } catch (NoSuchBucketException e) {
+            s3.createBucket(CreateBucketRequest.builder().bucket(bucketName).build());
+            System.out.println("Created missing bucket: " + bucketName);
+        }
 
-        return key;
+        // 2. Proceed with upload
+        try {
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(file.getOriginalFilename())
+                    .contentType(file.getContentType())
+                    .build();
+
+            s3.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
+            return "File uploaded successfully";
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload file", e);
+        }
     }
 
     // Fix: Re-added the download method used by CertificateService
