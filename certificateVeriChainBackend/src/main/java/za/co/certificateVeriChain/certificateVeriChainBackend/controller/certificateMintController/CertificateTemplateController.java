@@ -104,7 +104,8 @@ public class CertificateTemplateController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
-        byte[] pdf = fileStorageService.downloadTemplate(t.getFileUrl());
+        // Pass the organization ID so the service knows which bucket to look in
+        byte[] pdf = fileStorageService.downloadTemplate(t.getFileUrl(), user.getOrganization().getId());
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, "application/pdf")

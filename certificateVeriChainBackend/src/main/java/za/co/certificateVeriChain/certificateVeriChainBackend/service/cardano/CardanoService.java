@@ -17,7 +17,7 @@ import java.util.List;
 @Service
 public class CardanoService {
 
-    private static final String ISSUER_ADDRESS = "addr_test1vqhmymwkaqn5wl9yqdtnf667sxdzxuj603vjwrltxyl5ssqe76aa8";
+    //private static final String ISSUER_ADDRESS = "addr_test1vqhmymwkaqn5wl9yqdtnf667sxdzxuj603vjwrltxyl5ssqe76aa8";
 
     @Autowired
     private CardanoClient cardanoClient;

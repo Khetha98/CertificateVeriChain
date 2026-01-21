@@ -41,45 +41,38 @@ public class FileStorageService {
                 .build();
     }
 
-    public String uploadTemplate(MultipartFile file, Long organizationId) {
-        String bucketName = "certificates"+organizationId; // or use your @Value variable
+    public String uploadTemplate(MultipartFile file, Long organizationId) throws IOException {
+        // Use a consistent bucket name
+        String dynamicBucketName = "certificates-" + organizationId;
 
-        // 1. Check if bucket exists, create if not
+        // Create bucket if missing
         try {
-            s3.headBucket(HeadBucketRequest.builder().bucket(bucketName).build());
+            s3.headBucket(HeadBucketRequest.builder().bucket(dynamicBucketName).build());
         } catch (NoSuchBucketException e) {
-            s3.createBucket(CreateBucketRequest.builder().bucket(bucketName).build());
-            System.out.println("Created missing bucket: " + bucketName);
+            s3.createBucket(CreateBucketRequest.builder().bucket(dynamicBucketName).build());
         }
 
-        // 2. Proceed with upload
-        try {
-            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(file.getOriginalFilename())
-                    .contentType(file.getContentType())
-                    .build();
+        String fileName = file.getOriginalFilename();
 
-            s3.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
-            return "File uploaded successfully";
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to upload file", e);
-        }
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(dynamicBucketName)
+                .key(fileName)
+                .contentType(file.getContentType())
+                .build();
+
+        s3.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
+
+        // IMPORTANT: Return the fileName (key), NOT a success message
+        return fileName;
     }
 
-    // Fix: Re-added the download method used by CertificateService
-    public byte[] download(String key) {
-        return s3.getObject(
-                b -> b.bucket(bucketName).key(key),
-                ResponseTransformer.toBytes()
-        ).asByteArray();
-    }
+    // Replace your old download/downloadTemplate methods with this:
+    public byte[] downloadTemplate(String key, Long organizationId) {
+        String dynamicBucketName = "certificates-" + organizationId;
 
-    // Kept for the Controller
-    public byte[] downloadTemplate(String key) {
         return s3.getObject(
                 GetObjectRequest.builder()
-                        .bucket(bucketName)
+                        .bucket(dynamicBucketName)
                         .key(key)
                         .build(),
                 ResponseTransformer.toBytes()

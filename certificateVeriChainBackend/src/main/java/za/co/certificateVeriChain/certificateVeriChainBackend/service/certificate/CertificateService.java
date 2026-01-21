@@ -375,7 +375,12 @@ public class CertificateService {
             }
 
             CertificateTemplate template = cert.getTemplate();
-            byte[] templatePdf = fileStorageService.download(template.getFileUrl());
+
+            // FIX: Pass the organization ID from the certificate to the storage service
+            byte[] templatePdf = fileStorageService.downloadTemplate(
+                    template.getFileUrl(),
+                    cert.getOrganization().getId()
+            );
 
             return generateCertificate(templatePdf, cert);
 
@@ -383,6 +388,5 @@ public class CertificateService {
             throw new RuntimeException("Failed to generate verified certificate", e);
         }
     }
-
 
 }
