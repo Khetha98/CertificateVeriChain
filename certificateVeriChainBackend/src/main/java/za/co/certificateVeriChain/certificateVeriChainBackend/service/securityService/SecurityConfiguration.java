@@ -1,6 +1,7 @@
 package za.co.certificateVeriChain.certificateVeriChainBackend.service.securityService;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -30,6 +31,8 @@ public class SecurityConfiguration {
 
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    @Value("${PRODALLOWEDORIGIN:}")
+    private String prodAllowedOrigin;
 
     public SecurityConfiguration(
             JwtAuthenticationFilter jwtAuthenticationFilter,
@@ -51,6 +54,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/api/verify/**").permitAll()
+                        .requestMatchers("/api/contact/**").permitAll()
                         .requestMatchers("/templates/**").authenticated()
                         .requestMatchers("/admin/**").hasRole("SUPER_ADMIN")
                         .anyRequest().authenticated()
@@ -81,6 +85,10 @@ public class SecurityConfiguration {
                 "http://localhost:3001"
 
         ));
+
+        if (prodAllowedOrigin != null && !prodAllowedOrigin.isBlank()) {
+            configuration.getAllowedOriginPatterns().add(prodAllowedOrigin);
+        }
 
         configuration.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS"

@@ -8,11 +8,9 @@ import lombok.ToString;
 @Setter
 @ToString
 public class LoginResponse {
+
     private String token;
-
     private long expiresIn;
+    private String role;
 
-    public String getToken() {
-        return token;
-    }
 }
