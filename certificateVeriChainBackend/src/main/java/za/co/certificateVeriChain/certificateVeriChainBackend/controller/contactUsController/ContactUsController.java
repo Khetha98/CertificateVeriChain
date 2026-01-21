@@ -13,11 +13,10 @@ import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.request.Conta
 
 @RestController
 @RequestMapping("/api")
-@RequiredArgsConstructor
 public class ContactUsController {
 
         @Autowired
-        private final JavaMailSender mailSender;
+        private  JavaMailSender mailSender;
 
         @PostMapping("/contact")
         public ResponseEntity<String> contact(@RequestBody ContactRequest request) {

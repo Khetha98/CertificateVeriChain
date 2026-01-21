@@ -21,7 +21,6 @@ public class FileStorageService {
 
     private final S3Client s3;
 
-    // This will now use the value from your properties file
     @Value("${cloud.aws.s3.bucket:certificate-templates}")
     private String bucketName;
 
@@ -39,7 +38,7 @@ public class FileStorageService {
                                 AwsBasicCredentials.create(accessKey, secretKey)
                         )
                 )
-                .forcePathStyle(true) // Required for MinIO and Supabase
+                .forcePathStyle(true)
                 .build();
     }
 
@@ -58,6 +57,15 @@ public class FileStorageService {
         return key;
     }
 
+    // Fix: Re-added the download method used by CertificateService
+    public byte[] download(String key) {
+        return s3.getObject(
+                b -> b.bucket(bucketName).key(key),
+                ResponseTransformer.toBytes()
+        ).asByteArray();
+    }
+
+    // Kept for the Controller
     public byte[] downloadTemplate(String key) {
         return s3.getObject(
                 GetObjectRequest.builder()
