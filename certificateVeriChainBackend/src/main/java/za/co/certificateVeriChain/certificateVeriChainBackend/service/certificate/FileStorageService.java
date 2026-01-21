@@ -41,8 +41,8 @@ public class FileStorageService {
                 .build();
     }
 
-    public String uploadTemplate(MultipartFile file) {
-        String bucketName = "certificates"; // or use your @Value variable
+    public String uploadTemplate(MultipartFile file, Long organizationId) {
+        String bucketName = "certificates"+organizationId; // or use your @Value variable
 
         // 1. Check if bucket exists, create if not
         try {
