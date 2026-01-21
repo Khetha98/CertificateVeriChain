@@ -31,7 +31,7 @@ public class SecurityConfiguration {
 
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    @Value("${PRODALLOWEDORIGIN:}")
+    @Value("${prodAllowedOrigin}")
     private String prodAllowedOrigin;
 
     public SecurityConfiguration(
