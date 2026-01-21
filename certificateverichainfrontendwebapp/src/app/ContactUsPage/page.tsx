@@ -7,8 +7,8 @@ export default function ContactUsPage() {
 
       <div className="grid md:grid-cols-2 gap-10">
         <div>
-          <p>Email: support@certificateverichain.co.za</p>
-          <p>Phone: +27 XX XXX XXXX</p>
+          <p>Email: Khethukuthulasimamane@gmail.com</p>
+          <p>Phone: +27 682712305</p>
           <p className="mt-4 text-gray-600">
             Reach out for demos, partnerships, or institutional onboarding.
           </p>
