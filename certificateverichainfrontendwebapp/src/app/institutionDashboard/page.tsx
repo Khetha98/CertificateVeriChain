@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch } from "@/app/lib/api";
 import { useRouter } from "next/navigation";
+import { API_BASE_URL } from "../lib/config";
 
 export default function InstitutionDashboard() {
   const [certs, setCerts] = useState<any[]>([]);
@@ -11,7 +12,7 @@ export default function InstitutionDashboard() {
   // fetchCerts can still be used for buttons
   const fetchCerts = async () => {
     try {
-      const r = await apiFetch("http://localhost:9090/issuer/certificates");
+      const r = await apiFetch(`${API_BASE_URL}/issuer/certificates`);
 
       if (!r.ok) {
         alert("Failed to load certificates");
@@ -39,7 +40,7 @@ export default function InstitutionDashboard() {
 
   const handleRevoke = async (uid: string) => {
     const res = await apiFetch(
-      `http://localhost:9090/issuer/certificates/${uid}/revoke`,
+      `${API_BASE_URL}/issuer/certificates/${uid}/revoke`,
       { method: "POST" }
     );
     if (!res.ok) {
@@ -54,7 +55,7 @@ export default function InstitutionDashboard() {
     if (!confirmed) return;
 
     const res = await apiFetch(
-      `http://localhost:9090/issuer/certificates/${uid}`,
+      `${API_BASE_URL}/issuer/certificates/${uid}`,
       { method: "DELETE" }
     );
 

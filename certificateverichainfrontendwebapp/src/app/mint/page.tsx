@@ -1,35 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch } from "@/app/lib/api";
 import { useRouter } from "next/navigation";
 import {useEffect} from "react";
 
 import jsPDF from "jspdf";
-
-/*function downloadProofPDF(issued) {
-  const doc = new jsPDF();
-
-  doc.setFont("helvetica");
-  doc.setFontSize(12);
-
-  let y = 20;
-  const line = (text) => {
-    doc.text(text, 20, y);
-    y += 8;
-  };
-
-  line("Certificate Verification Data");
-  line("------------------------------");
-  line(`Certificate ID: ${issued.certificateUid}`);
-  line(`Student Name: ${issued.studentName} ${issued.studentSurname || ""}`);
-  line(`Identifier: ${issued.studentIdentifier}`);
-  line(`Certificate Type: ${issued.certificateType}`);
-  line(`Issued By: ${issued.organization?.name || "Institution"}`);
-  line(`Status: ${issued.status}`);
-
-  doc.save(`verification-${issued.certificateUid}.pdf`);
-}*/
+import { API_BASE_URL } from "../lib/config";
 
 
 export default function MintCertificatePage() {
@@ -46,7 +23,7 @@ export default function MintCertificatePage() {
   useEffect(() => {
     const loadTemplates = async () => {
       try {
-        const r = await apiFetch("http://localhost:9090/templates");
+        const r = await apiFetch(`${API_BASE_URL}/templates`);
         if (!r.ok) return;
 
         const text = await r.text();
@@ -76,7 +53,7 @@ export default function MintCertificatePage() {
 
     setLoading(true);
 
-    const r = await apiFetch("http://localhost:9090/issuer/certificates", {
+    const r = await apiFetch(`${API_BASE_URL}/issuer/certificates`, {
       method: "POST",
       body: JSON.stringify({
         studentName,

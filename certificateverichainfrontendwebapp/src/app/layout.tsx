@@ -4,7 +4,7 @@ import "./globals.css";
 
 // app/layout.tsx
 
-import { AuthProvider } from "@/lib/AuthContext";
+import { AuthProvider } from "@/app/lib/AuthContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 

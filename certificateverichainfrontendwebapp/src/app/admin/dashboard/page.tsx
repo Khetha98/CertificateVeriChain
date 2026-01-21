@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch } from "@/app/lib/api";
 
 export default function AdminDashboard() {
   const [institutions, setInstitutions] = useState([]);

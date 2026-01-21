@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch } from "@/app/lib/api";
 import jsPDF from "jspdf";
+import { API_BASE_URL } from "@/app/lib/config";
 
 interface Template {
   id: number;
@@ -26,7 +27,7 @@ export default function BulkMintPage() {
   useEffect(() => {
     async function loadTemplates() {
       try {
-        const res = await apiFetch("http://localhost:9090/templates");
+        const res = await apiFetch(`${API_BASE_URL}/templates`);
         if (!res.ok) return;
 
         const data: Template[] = await res.json();
@@ -67,7 +68,7 @@ export default function BulkMintPage() {
     setResult(null);
 
     try {
-      const res = await apiFetch("http://localhost:9090/issuer/bulk/mint", {
+      const res = await apiFetch(`${API_BASE_URL}/issuer/bulk/mint`, {
         method: "POST",
         body: formData,
       });

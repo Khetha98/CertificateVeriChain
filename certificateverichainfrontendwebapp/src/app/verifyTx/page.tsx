@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { apiFetch } from "../auth/login/page";
+import { API_BASE_URL } from "../lib/config";
+import { apiFetch } from "../lib/api";
 
 export default function VerifyTxPage() {
 
@@ -10,7 +11,7 @@ export default function VerifyTxPage() {
  async function verify() {
 
    const r = await apiFetch(
-     `http://localhost:9090/verify-chain/tx/${tx}`
+     `${API_BASE_URL}/verify-chain/tx/${tx}`
    );
 
    if(!r.ok){

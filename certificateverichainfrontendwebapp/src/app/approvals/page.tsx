@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch } from "@/app/lib/api";
+import { API_BASE_URL } from "@/app/lib/config";
 
 type ApprovalItem = {
   certificateUid: number;
@@ -16,7 +17,7 @@ export default function ApprovalsPage() {
   useEffect(() => {
     const loadApprovals = async () => {
       try {
-        const r = await apiFetch("http://localhost:9090/approvals/pending", {
+        const r = await apiFetch(`${API_BASE_URL}/approvals/pending`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("jwt")}` // or however you store it
           }
@@ -40,7 +41,7 @@ export default function ApprovalsPage() {
 
   async function approve(uid: number) {
     await apiFetch(
-      `http://localhost:9090/issuer/certificates/${uid}/approve`,
+      `${API_BASE_URL}/issuer/certificates/${uid}/approve`,
       { method: "POST" }
     );
 

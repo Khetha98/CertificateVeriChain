@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { API_BASE_URL } from "../lib/config";
 
 export default function VerificationSystemPage() {
   const [certificateId, setCertificateId] = useState("");
@@ -8,7 +9,7 @@ export default function VerificationSystemPage() {
 
   async function verify() {
     const res = await fetch(
-      `http://localhost:9090/api/verify/${certificateId}`
+      `${API_BASE_URL}/api/verify/${certificateId}`
     );
 
     if (!res.ok) {

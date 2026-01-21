@@ -3,7 +3,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/AuthContext"; // Import useAuth
+import { useAuth } from "@/app/lib/AuthContext"; // Import useAuth
+import { API_BASE_URL } from "@/app/lib/config";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,7 +13,7 @@ export default function LoginPage() {
   const auth = useAuth(); // Access the auth context
 
   async function login() {
-    const res = await fetch("http://localhost:9090/auth/login", {
+    const res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -22,7 +23,7 @@ export default function LoginPage() {
     
     // 👇 CRITICAL CHANGE: Use the context's login function
     if (data.token) {
-      auth.login(data.token); 
+      auth.login(data.token, data.role);
       // navigate to dashboard
       router.push("/institutionDashboard"); 
     } else {

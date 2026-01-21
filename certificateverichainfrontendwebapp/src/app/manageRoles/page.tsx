@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { apiFetch } from "../auth/login/page";
+
+import { API_BASE_URL } from "../lib/config";
+import { apiFetch } from "../lib/api";
 
 export default function ManageRoles() {
 
@@ -8,7 +10,7 @@ export default function ManageRoles() {
 
 useEffect(() => {
   (async () => {
-    const r = await apiFetch("http://localhost:9090/admin/members");
+    const r = await apiFetch(`${API_BASE_URL}/admin/members`);
     if (r.ok) setUsers(await r.json());
   })();
 }, []);

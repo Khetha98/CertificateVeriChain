@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch } from "@/app/lib/api";
 import { useEffect } from "react";
+import { API_BASE_URL } from "@/app/lib/config";
 
 export default function TemplateCreate() {
   const [name, setName] = useState("");
@@ -21,7 +22,7 @@ export default function TemplateCreate() {
     form.append("description", desc);
     form.append("file", file);
 
-    const r = await apiFetch("http://localhost:9090/templates", {
+    const r = await apiFetch(`${API_BASE_URL}/templates`, {
       method: "POST",
       body: form
     });
@@ -37,7 +38,7 @@ export default function TemplateCreate() {
     useEffect(() => {
       const loadTemplates = async () => {
         try {
-          const r = await apiFetch("http://localhost:9090/templates");
+          const r = await apiFetch(`${API_BASE_URL}/templates`);
 
           if (!r.ok) {
             setTemplates([]);
@@ -61,7 +62,7 @@ export default function TemplateCreate() {
       if (!confirmed) return;
 
       const res = await apiFetch(
-        `http://localhost:9090/templates/${uid}`,
+        `${API_BASE_URL}/templates/${uid}`,
         { method: "DELETE" }
       );
 
@@ -74,7 +75,7 @@ export default function TemplateCreate() {
 
     const viewTemplate = async (id: number) => {
     const token = localStorage.getItem("token"); // same as apiFetch
-    const res = await fetch(`http://localhost:9090/templates/${id}/view`, {
+    const res = await fetch(`${API_BASE_URL}/templates/${id}/view`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
