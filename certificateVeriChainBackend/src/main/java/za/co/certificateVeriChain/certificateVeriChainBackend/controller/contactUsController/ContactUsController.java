@@ -1,6 +1,7 @@
 package za.co.certificateVeriChain.certificateVeriChainBackend.controller.contactUsController;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -15,6 +16,7 @@ import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.request.Conta
 @RequiredArgsConstructor
 public class ContactUsController {
 
+        @Autowired
         private final JavaMailSender mailSender;
 
         @PostMapping("/contact")
