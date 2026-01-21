@@ -16,7 +16,7 @@ import java.util.List;
 @Table(name = "app_user")
 @Getter
 @Setter
-@ToString
+@ToString(exclude = {"organization"})
 public class User implements UserDetails {
 
     @Id

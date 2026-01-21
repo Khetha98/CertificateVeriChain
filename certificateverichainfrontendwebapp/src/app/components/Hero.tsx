@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Hero() {
   return (
-    <section className="bg-gray-50">
+    <section className="bg-gradient-to-b from-white via-white to-gray-50">
       <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-10 p-10 items-center">
         <div>
           <h1 className="text-4xl font-bold leading-tight">
@@ -16,7 +16,7 @@ export default function Hero() {
           </p>
 
           <div className="mt-6 flex gap-4">
-            <Link href="/auth/register" className="bg-blue-600 text-white px-6 py-3 rounded">
+            <Link href="/auth/register" className="bg-blue-600 hover:bg-blue-700 transition text-white px-6 py-3 rounded-lg">
               Get Started
             </Link>
             <Link href="/VerificationSystemPage" className="border px-6 py-3 rounded">

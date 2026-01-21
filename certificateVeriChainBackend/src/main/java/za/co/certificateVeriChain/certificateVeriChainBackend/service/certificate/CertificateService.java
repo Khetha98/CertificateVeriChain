@@ -1,31 +1,28 @@
 package za.co.certificateVeriChain.certificateVeriChainBackend.service.certificate;
 
-import com.bloxbean.cardano.client.transaction.spec.Transaction;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.request.MintCertificateRequest;
-import za.co.certificateVeriChain.certificateVeriChainBackend.model.Certificate;
-import za.co.certificateVeriChain.certificateVeriChainBackend.model.CertificateTemplate;
-import za.co.certificateVeriChain.certificateVeriChainBackend.model.GovernanceApproval;
-import za.co.certificateVeriChain.certificateVeriChainBackend.model.User;
-import za.co.certificateVeriChain.certificateVeriChainBackend.repository.ApprovalRepository;
-import za.co.certificateVeriChain.certificateVeriChainBackend.repository.CertificateRepository;
-import za.co.certificateVeriChain.certificateVeriChainBackend.repository.CertificateTemplateRepository;
-import za.co.certificateVeriChain.certificateVeriChainBackend.repository.UserRepository;
+import za.co.certificateVeriChain.certificateVeriChainBackend.model.*;
+import za.co.certificateVeriChain.certificateVeriChainBackend.repository.*;
+import za.co.certificateVeriChain.certificateVeriChainBackend.service.cardano.CardanoClient;
 import za.co.certificateVeriChain.certificateVeriChainBackend.service.cardano.CardanoService;
+import za.co.certificateVeriChain.certificateVeriChainBackend.service.cardano.MerkleService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -34,6 +31,8 @@ import java.util.UUID;
 @Service
 public class CertificateService {
 
+    private static final Logger log =
+            LoggerFactory.getLogger(CardanoClient.class);
 
     private final CardanoService cardanoService;
     private final ObjectMapper objectMapper;
@@ -42,8 +41,10 @@ public class CertificateService {
     private final ApprovalRepository approvalRepo;
     private final FileStorageService fileStorageService;
     private final UserRepository userRepo;
+    private final CertificateBatchRepository certificateBatchRepository;
+    private final MerkleService merkleService;
 
-    public CertificateService(CardanoService cardanoService, CertificateRepository certificateRepository, CertificateTemplateRepository templateRepo, ApprovalRepository approvalRepo, FileStorageService fileStorageService, UserRepository userRepo) {
+    public CertificateService(CardanoService cardanoService, CertificateRepository certificateRepository, CertificateTemplateRepository templateRepo, ApprovalRepository approvalRepo, FileStorageService fileStorageService, UserRepository userRepo, CertificateBatchRepository certificateBatchRepository, MerkleService merkleService) {
         this.cardanoService = cardanoService;
         this.objectMapper = new ObjectMapper();
         this.certificateRepository = certificateRepository;
@@ -51,36 +52,45 @@ public class CertificateService {
         this.approvalRepo = approvalRepo;
         this.fileStorageService = fileStorageService;
         this.userRepo = userRepo;
+        this.certificateBatchRepository = certificateBatchRepository;
+        this.merkleService = merkleService;
+
     }
 
 
 
     public Certificate issueCertificate(
-            String studentName,
-            Long templateId,
+            MintCertificateRequest request,
             User issuer
     ) {
 
         CertificateTemplate template = templateRepo
-                .findById(templateId)
+                .findById(request.templateId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid template"));
 
         Certificate cert = new Certificate();
         cert.setIssuedBy(issuer);
+        cert.setCertificateType(request.certificateType());
         cert.setCertificateUid(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        cert.setStudentName(studentName);
+        cert.setStudentName(request.studentName());
+        cert.setStudentSurname(request.studentSurname());
         cert.setOrganization(issuer.getOrganization());
         cert.setTemplate(template);
+        cert.setStudentIdentifier(request.studentIdentifier());
 
         String hash = DigestUtils.sha256Hex(canonicalize(cert));
         String cleanTxHash = hash.replace("\"", "").trim();
         //certificate.setTxHash(cleanTxHash);
         cert.setCertificateHash(cleanTxHash);
-        cert.setIssuedAt(Instant.now().toString());
+        cert.setIssuedAt(Instant.now());
         cert.setStatus("PENDING_APPROVAL");
         cert.setVerificationCode(UUID.randomUUID().toString());
 
-
+        log.info("Lengths => hash={}, txHash={}, verificationCode={}",
+                cert.getCertificateHash().length(),
+                cert.getTxHash() != null ? cert.getTxHash().length() : 0,
+                cert.getVerificationCode().length()
+        );
 
         List<User> orgUsers = userRepo.findByOrganizationId(
                 issuer.getOrganization().getId()
@@ -103,9 +113,111 @@ public class CertificateService {
             }
         }
 
-
-
         return certificateRepository.save(cert);
+    }
+
+    public List<Certificate> createCertificates(
+            List<MintCertificateRequest> requests,
+            User issuer
+    ) {
+        CertificateTemplate template = templateRepo
+                .findById(requests.get(0).templateId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid template"));
+
+        List<Certificate> certificates = new ArrayList<>();
+
+        for (MintCertificateRequest req : requests) {
+            Certificate cert = createCertificate(issuer, req, template);
+            certificates.add(cert);
+        }
+
+        return certificateRepository.saveAll(certificates);
+    }
+
+    public CertificateBatch anchorBatch(List<Certificate> certificates) {
+
+        List<String> hashes = certificates.stream()
+                .map(Certificate::getCertificateHash)
+                .sorted()
+                .toList();
+
+        // Generate Merkle root
+        String merkleRoot = merkleService.calculateRoot(hashes);
+
+        // Generate proofs
+        Map<String, List<String>> proofs = merkleService.generateProofs(hashes);
+
+        // Anchor on-chain
+        String txHash = cardanoService.anchorHash(merkleRoot).block();
+
+        // Save batch
+        CertificateBatch batch = new CertificateBatch();
+        batch.setMerkleRoot(merkleRoot);
+        batch.setTxHash(txHash);
+        batch.setAnchoredAt(Instant.now());
+
+        certificateBatchRepository.save(batch);
+
+        // Attach batch + proof to each certificate
+        certificates.forEach(cert -> {
+            cert.setBatch(batch);
+
+            List<String> proof = proofs.get(cert.getCertificateHash());
+            cert.setMerkleProof(merkleService.toJson(proof));
+        });
+
+        return batch;
+    }
+
+
+
+
+    public void activateBatch(List<Certificate> certificates, String txHash) {
+        for (Certificate cert : certificates) {
+            cert.setTxHash(txHash);
+            cert.setStatus("ACTIVE");
+        }
+        certificateRepository.saveAll(certificates);
+    }
+
+    private Certificate createCertificate(User issuer, MintCertificateRequest request, CertificateTemplate template){
+        Certificate cert = new Certificate();
+        cert.setIssuedBy(issuer);
+        cert.setCertificateType(request.certificateType());
+        cert.setCertificateUid(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        cert.setStudentName(request.studentName());
+        cert.setStudentSurname(request.studentSurname());
+        cert.setOrganization(issuer.getOrganization());
+        cert.setTemplate(template);
+        cert.setStudentIdentifier(request.studentIdentifier());
+
+        String hash = DigestUtils.sha256Hex(canonicalize(cert));
+        String cleanTxHash = hash.replace("\"", "").trim();
+        //certificate.setTxHash(cleanTxHash);
+        cert.setCertificateHash(cleanTxHash);
+        cert.setIssuedAt(Instant.now());
+        cert.setStatus("PENDING_APPROVAL");
+        cert.setVerificationCode(UUID.randomUUID().toString());
+        List<User> orgUsers = userRepo.findByOrganizationId(
+                issuer.getOrganization().getId()
+        );
+
+        if (orgUsers.size() == 1) {
+            cert.setStatus("APPROVED");
+            certificateRepository.save(cert);
+
+            return cert;
+        }
+
+// Otherwise create approvals
+        for (User u : orgUsers) {
+            if (!u.getId().equals(issuer.getId())) {
+                approvalRepo.save(
+                        new GovernanceApproval(cert.getCertificateUid(), u.getId(), false)
+                );
+            }
+        }
+        return cert;
     }
 
 
@@ -159,10 +271,7 @@ public class CertificateService {
 
     public byte[] generateCertificate(
             byte[] templatePdf,
-            String studentName,
-            String course,
-            String issuer,
-            String uid
+            Certificate cert
     ) throws IOException {
 
         PDDocument doc = PDDocument.load(templatePdf);
@@ -178,18 +287,39 @@ public class CertificateService {
         cs.setFont(PDType1Font.HELVETICA_BOLD, 24);
         cs.beginText();
         cs.newLineAtOffset(200, 420);
-        cs.showText(studentName);
+        cs.showText(cert.getStudentName() + " " + (cert.getStudentSurname() != null ? cert.getStudentSurname() : ""));
         cs.endText();
 
         cs.setFont(PDType1Font.HELVETICA, 14);
+
+        int y = 380;
         cs.beginText();
-        cs.newLineAtOffset(200, 380);
-        cs.showText(course);
+        cs.newLineAtOffset(200, y);
+        cs.showText("Certificate Type: " + cert.getCertificateType());
         cs.endText();
 
+        y -= 30;
         cs.beginText();
-        cs.newLineAtOffset(200, 340);
-        cs.showText("Certificate ID: " + uid);
+        cs.newLineAtOffset(200, y);
+        cs.showText("Student ID: " + cert.getStudentIdentifier());
+        cs.endText();
+
+        y -= 30;
+        cs.beginText();
+        cs.newLineAtOffset(200, y);
+        cs.showText("Organization: " + cert.getOrganization().getName());
+        cs.endText();
+
+        y -= 30;
+        cs.beginText();
+        cs.newLineAtOffset(200, y);
+        cs.showText("Certificate UID: " + cert.getCertificateUid());
+        cs.endText();
+
+        y -= 30;
+        cs.beginText();
+        cs.newLineAtOffset(200, y);
+        cs.showText("Status: " + cert.getStatus());
         cs.endText();
 
         cs.close();
@@ -200,6 +330,39 @@ public class CertificateService {
 
         return out.toByteArray();
     }
+
+    public byte[] addAdataFromBlankPage(Certificate cert) throws IOException {
+        PDDocument doc = new PDDocument();
+        PDPage page = new PDPage(PDRectangle.A4);
+        doc.addPage(page);
+
+        PDPageContentStream cs = new PDPageContentStream(doc, page);
+
+        cs.beginText();
+        cs.setFont(PDType1Font.HELVETICA, 12);
+        cs.setLeading(16f);
+        cs.newLineAtOffset(50, 750);
+
+        cs.showText("Certificate ID: " + cert.getCertificateUid());
+        cs.newLine();
+        cs.showText("Student Name: " + cert.getStudentName());
+        cs.newLine();
+        cs.showText("Surname: " + cert.getStudentSurname());
+        cs.newLine();
+        cs.showText("Identifier: " + cert.getStudentIdentifier());
+        cs.newLine();
+        cs.showText("Type: " + cert.getCertificateType());
+
+        cs.endText();
+        cs.close();
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        doc.save(outputStream);
+        doc.close();
+
+        return  outputStream.toByteArray();
+    }
+
 
     public byte[] generateVerifiedCertificate(String uid) {
         try {
@@ -212,21 +375,14 @@ public class CertificateService {
             }
 
             CertificateTemplate template = cert.getTemplate();
-
-            // 🔹 Download template PDF from MinIO
             byte[] templatePdf = fileStorageService.download(template.getFileUrl());
 
-            return generateCertificate(
-                    templatePdf,
-                    cert.getStudentName(),
-                    template.getDescription(), // or course name
-                    cert.getOrganization().getName(),
-                    String.valueOf(cert.getCertificateUid())
-            );
+            return generateCertificate(templatePdf, cert);
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate verified certificate", e);
         }
     }
+
 
 }

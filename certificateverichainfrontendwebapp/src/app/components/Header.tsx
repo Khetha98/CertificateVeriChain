@@ -34,7 +34,7 @@ export default function Header() {
   }, [open]);
 
   return (
-    <header className="bg-white border-b">
+    <header className="bg-white/80 backdrop-blur shadow-[0_1px_0_0_rgba(0,0,0,0.04)]">
       <div className="max-w-7xl mx-auto flex items-center justify-between p-4">
       <div
         onClick={() => {
@@ -78,49 +78,61 @@ export default function Header() {
                 U
               </button>
 
-              {open && (
-                <div className="absolute right-0 mt-2 w-48 bg-white shadow rounded z-50">
-                  <button
-                    onClick={() => {
-                      router.push("/templates/create");
-                      setOpen(false);
-                    }}
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
-                  >
-                    Create Template
-                  </button>
+          {open && (
+            <div className="absolute right-0 mt-2 w-56 bg-white shadow rounded z-50">
+              <button
+                onClick={() => {
+                  router.push("/templates/create");
+                  setOpen(false);
+                }}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+              >
+                Templates
+              </button>
 
-                  <button
-                    onClick={() => {
-                      router.push("/mint");
-                      setOpen(false);
-                    }}
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
-                  >
-                    Mint Certificate
-                  </button>
+              <button
+                onClick={() => {
+                  router.push("/mint");
+                  setOpen(false);
+                }}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+              >
+                Mint Certificate
+              </button>
 
-                  <button
-                    onClick={() => {
-                      router.push("/approvals");
-                      setOpen(false);
-                    }}
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
-                  >
-                    Approvals
-                  </button>
+              {/* ✅ New Bulk/Nulk Mint */}
+              <button
+                onClick={() => {
+                  router.push("/bulkMint");
+                  setOpen(false);
+                }}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+              >
+                Bulk Certificate Mint
+              </button>
 
-                  <button
-                    onClick={() => {
-                      logout();
-                      setOpen(false);
-                    }}
-                    className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
+              <button
+                onClick={() => {
+                  router.push("/approvals");
+                  setOpen(false);
+                }}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+              >
+                Approvals
+              </button>
+
+              <button
+                onClick={() => {
+                  logout();
+                  setOpen(false);
+                }}
+                className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
+              >
+                Logout
+              </button>
+            </div>
+          )}
+
             </div>
           )}
         </nav>

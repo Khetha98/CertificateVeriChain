@@ -1,0 +1,28 @@
+studentName,certificateUid,templateId,organizationId
+
+//////
+Finalization algorithm
+IF certificate.status == PENDING
+AND approvals.count == matrix.roles.count
+AND all approvals == true
+THEN → anchorHash → ACTIVE
+
+
+You already almost implemented this in CertificateService.
+
+
+////
+Organization
+   └── users (members who approve)
+
+CertificateTemplate
+   └── certificates
+
+Certificate
+   └── verificationCode
+   └── txHash (Cardano anchor)
+
+GovernanceApproval
+   └── certificateUid
+   └── approver
+

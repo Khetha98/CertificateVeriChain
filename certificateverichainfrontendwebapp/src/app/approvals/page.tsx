@@ -3,20 +3,48 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 
+type ApprovalItem = {
+  certificateUid: number;
+  studentName: string;
+  templateName: string;
+  issuerName: string;
+};
+
 export default function ApprovalsPage() {
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<ApprovalItem[]>([]);
 
   useEffect(() => {
-    apiFetch("http://localhost:9090/approvals/pending")
-      .then(r => r.json())
-      .then(setItems);
+    const loadApprovals = async () => {
+      try {
+        const r = await apiFetch("http://localhost:9090/approvals/pending", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("jwt")}` // or however you store it
+          }
+        });
+
+        if (!r.ok) {
+          setItems([]);
+          return;
+        }
+
+        const text = await r.text();
+        setItems(text ? JSON.parse(text) : []);
+      } catch (e) {
+        console.error("Failed to load approvals", e);
+        setItems([]);
+      }
+    };
+
+    loadApprovals();
   }, []);
 
   async function approve(uid: number) {
-    await apiFetch(`http://localhost:9090/issuer/certificates/${uid}/approve`, {
-      method: "POST"
-    });
-    setItems(items.filter(i => i.certificateUid !== uid));
+    await apiFetch(
+      `http://localhost:9090/issuer/certificates/${uid}/approve`,
+      { method: "POST" }
+    );
+
+    setItems(prev => prev.filter(i => i.certificateUid !== uid));
   }
 
   return (
@@ -43,4 +71,3 @@ export default function ApprovalsPage() {
     </div>
   );
 }
-

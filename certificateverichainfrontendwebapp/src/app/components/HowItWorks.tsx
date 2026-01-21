@@ -7,10 +7,10 @@ const STEPS = [
 
 export default function HowItWorks() {
   return (
-    <section className="bg-gray-50 p-10">
+    <section className="bg-gradient-to-b from-white to-gray-50 p-16">
       <div className="max-w-5xl mx-auto">
         <h2 className="text-2xl font-bold mb-6">How It Works</h2>
-        <ol className="space-y-4">
+        <ol className="space-y-6">
           {STEPS.map((step, index) => (
             <li key={step} className="flex gap-4">
               <span className="font-bold">{index + 1}</span>

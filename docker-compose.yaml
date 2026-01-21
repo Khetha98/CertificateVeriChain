@@ -1,0 +1,57 @@
+version: '3.9'
+services:
+  backend:
+    build: ./certificateVeriChainBackend
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    environment:
+      JAVA_OPTS: "-Xmx384m"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/appdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    depends_on:
+      - db
+      - minio
+
+  frontend:
+    build: ./certificateverichainfrontendwebapp
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: appdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+    volumes:
+      - minio-data:/data
+
+volumes:
+  db-data:
+  minio-data:
+

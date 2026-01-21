@@ -11,6 +11,7 @@ import reactor.core.publisher.Mono;
 import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.request.MintCertificateRequest;
 import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.response.CertificateApprovalDto;
 import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.response.CertificateDto;
+import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.response.CertificateIssuedDto;
 import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.response.PendingApprovalDto;
 import za.co.certificateVeriChain.certificateVeriChainBackend.model.*;
 import za.co.certificateVeriChain.certificateVeriChainBackend.repository.ApprovalRepository;
@@ -21,6 +22,7 @@ import za.co.certificateVeriChain.certificateVeriChainBackend.service.certificat
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -43,6 +45,7 @@ public class CertificateMintingController {
                 .map(cert -> new CertificateDto(
                         cert.getCertificateUid(),
                         cert.getStudentName(),
+                        cert.getStudentSurname(),
                         cert.getStatus(),
                         cert.getIssuedAt(),
                         cert.getVerificationCode(),
@@ -53,21 +56,22 @@ public class CertificateMintingController {
         return ResponseEntity.ok(dtos);
     }
 
-    @PreAuthorize("hasRole('ISSUER')")
     @PostMapping("/{uid}/revoke")
-    public Mono<ResponseEntity<CertificateDto>> revoke(@PathVariable String uid) {
-        return revocationService.revoke(uid)
-                .map(cert -> new CertificateDto(
-                        cert.getCertificateUid(),
-                        cert.getStudentName(),
-                        cert.getStatus(),
-                        cert.getIssuedAt(),
-                        cert.getVerificationCode(),
-                        cert.getTemplate().getId()
-                ))
-                .map(ResponseEntity::ok)
-                .defaultIfEmpty(ResponseEntity.noContent().build());
+    @PreAuthorize("hasRole('ISSUER')")
+    public ResponseEntity<CertificateDto> revoke(@PathVariable String uid) {
+        Certificate cert = revocationService.revoke(uid).block();
+
+        return ResponseEntity.ok(new CertificateDto(
+                cert.getCertificateUid(),
+                cert.getStudentName(),
+                cert.getStudentSurname(),
+                cert.getStatus(),
+                cert.getIssuedAt(),
+                cert.getVerificationCode(),
+                cert.getTemplate().getId()
+        ));
     }
+
 
     @GetMapping("/approvals/pending")
     public List<PendingApprovalDto> pendingApprovals(@AuthenticationPrincipal User user) {
@@ -75,18 +79,27 @@ public class CertificateMintingController {
     }
 
     @PostMapping
-    public ResponseEntity<CertificateDto> mint(@RequestBody MintCertificateRequest req, @AuthenticationPrincipal User user) {
-        Certificate cert = certificateService.issueCertificate(req.studentName(), req.templateId(), user);
-        CertificateDto dto = new CertificateDto(
-                cert.getCertificateUid(),
-                cert.getStudentName(),
-                cert.getStatus(),
-                cert.getIssuedAt(),
-                cert.getVerificationCode(),
-                cert.getTemplate().getId()
+    public ResponseEntity<CertificateIssuedDto> mint(
+            @RequestBody MintCertificateRequest req,
+            @AuthenticationPrincipal User user
+    ) {
+        Certificate cert = certificateService.issueCertificate(req, user);
+
+        return ResponseEntity.ok(
+                new CertificateIssuedDto(
+                        cert.getCertificateUid(),
+                        cert.getStudentName(),
+                        cert.getStudentSurname(),
+                        cert.getStudentIdentifier(),
+                        cert.getCertificateType(),
+                        cert.getOrganization().getName(),
+                        cert.getIssuedAt(),
+                        cert.getVerificationCode(),
+                        cert.getStatus()
+                )
         );
-        return ResponseEntity.ok(dto);
     }
+
 
     @PostMapping("/{uid}/approve")
     public ResponseEntity<?> approve(@PathVariable String uid, @AuthenticationPrincipal User user) {
@@ -125,14 +138,14 @@ public class CertificateMintingController {
         Certificate cert = certificateRepository.findByCertificateUid(uid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Certificate not found"));
 
-        // Optional: only allow deleting certificates from the issuer's organization
         if (!cert.getOrganization().getId().equals(user.getOrganization().getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to delete this certificate");
         }
 
         certificateRepository.delete(cert);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build(); // ✅ always returns 200 OK with empty JSON
     }
+
 
 
 }

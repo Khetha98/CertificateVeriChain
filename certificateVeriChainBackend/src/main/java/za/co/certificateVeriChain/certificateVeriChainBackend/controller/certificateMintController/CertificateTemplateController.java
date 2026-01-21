@@ -1,10 +1,15 @@
 package za.co.certificateVeriChain.certificateVeriChainBackend.controller.certificateMintController;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import za.co.certificateVeriChain.certificateVeriChainBackend.dtos.response.CertificateTemplateDto;
 import za.co.certificateVeriChain.certificateVeriChainBackend.model.CertificateTemplate;
 import za.co.certificateVeriChain.certificateVeriChainBackend.model.User;
@@ -71,6 +76,41 @@ public class CertificateTemplateController {
                 .toList();
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTemplate(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user
+    ) {
+        CertificateTemplate t = repo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        if (!t.getOrganization().getId().equals(user.getOrganization().getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        repo.delete(t);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/view")
+    public ResponseEntity<byte[]> viewTemplate(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user
+    ) {
+        CertificateTemplate t = repo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        if (!t.getOrganization().getId().equals(user.getOrganization().getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        byte[] pdf = fileStorageService.downloadTemplate(t.getFileUrl());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, "application/pdf")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                .body(pdf);
+    }
 
 }
 

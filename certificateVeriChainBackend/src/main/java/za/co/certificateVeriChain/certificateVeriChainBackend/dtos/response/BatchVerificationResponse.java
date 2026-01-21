@@ -1,35 +1,37 @@
 package za.co.certificateVeriChain.certificateVeriChainBackend.dtos.response;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import za.co.certificateVeriChain.certificateVeriChainBackend.enums.CertificateType;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
 @NoArgsConstructor
-public class VerificationResponse {
+public class BatchVerificationResponse {
 
     private boolean valid;
     private String message;
 
-    private String certificateUid;
-    private String certificateType;
+    private String batchUid;
+
+    private String txHash;
+    private ArrayList<VerificationResponse> verificationResponseList = new ArrayList<>();
 
     // Optional public info
     private String studentName;
     private String organizationName;
     private Instant issuedAt;
 
-    public VerificationResponse(boolean valid, String message) {
+    public BatchVerificationResponse(boolean valid, String message) {
         this.valid = valid;
         this.message = message;
     }
 
-    public VerificationResponse(
+    public BatchVerificationResponse(
             boolean valid,
             String message,
             String studentName,

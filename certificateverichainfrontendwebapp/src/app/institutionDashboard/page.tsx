@@ -12,17 +12,22 @@ export default function InstitutionDashboard() {
   const fetchCerts = async () => {
     try {
       const r = await apiFetch("http://localhost:9090/issuer/certificates");
+
       if (!r.ok) {
         alert("Failed to load certificates");
         return;
       }
-      const data = await r.json();
+
+      const text = await r.text(); // 👈 SAFE
+      const data = text ? JSON.parse(text) : [];
       setCerts(data);
+
     } catch (err) {
       console.error(err);
       alert("Failed to load certificates");
     }
   };
+
 
   useEffect(() => {
     // wrap async call inside effect

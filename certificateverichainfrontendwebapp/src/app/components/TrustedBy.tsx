@@ -9,7 +9,7 @@ export default function TrustedBy() {
   ];
 
   return (
-    <section className="bg-white border-t border-b">
+    <section className="bg-white relative">
       <div className="max-w-7xl mx-auto p-10 text-center">
         <h3 className="text-gray-600 uppercase tracking-wide text-sm">
           Trusted By
@@ -19,7 +19,7 @@ export default function TrustedBy() {
           {partners.map((p) => (
             <div
               key={p}
-              className="border rounded-lg py-4 px-2 text-gray-700"
+              className="py-4 px-2 text-gray-500"
             >
               {p}
             </div>

@@ -1,6 +1,6 @@
 export default function Metrics() {
   return (
-    <section className="max-w-7xl mx-auto p-10 grid md:grid-cols-4 gap-6 text-center">
+    <section className="max-w-7xl mx-auto p-16 grid md:grid-cols-4 gap-10 text-center">
       <div>
         <p className="text-3xl font-bold">&lt;1s</p>
         <p className="text-gray-600">Verification</p>

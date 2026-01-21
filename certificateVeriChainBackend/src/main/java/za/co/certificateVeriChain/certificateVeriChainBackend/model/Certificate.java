@@ -4,47 +4,70 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import za.co.certificateVeriChain.certificateVeriChainBackend.enums.CertificateType;
+
+import java.time.Instant;
 
 @Entity
 @Getter
 @Setter
-@ToString
+@ToString(exclude = {"organization", "template", "issuedBy"})
 public class Certificate {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    /* 🔑 Public identifier */
+    @Column(nullable = false, unique = true, updatable = false)
     private String certificateUid;
 
-    @ManyToOne
-    @JoinColumn(name = "organization_id", nullable = false)
+    /* 🏫 Ownership */
+    @ManyToOne(optional = false)
     private Organization organization;
 
-    @ManyToOne
-    @JoinColumn(name = "template_id", nullable = false)
+    @ManyToOne(optional = false)
     private CertificateTemplate template;
 
+    @ManyToOne(optional = false)
+    private User issuedBy;
+
+    /* 👤 Student identity */
     @Column(nullable = false)
     private String studentName;
 
-    /* 🔐 Blockchain integrity */
+    private String studentSurname;
+
+    @Column(nullable = false)
+    private String studentIdentifier;
+    // student number / email / national ID hash
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private CertificateType certificateType;
+
+    /* 🔐 Integrity */
     @Column(nullable = false, unique = true, length = 64)
     private String certificateHash;
 
     private String txHash;
 
     /* 🔁 Lifecycle */
-    private String status;     // ISSUED, REVOKED
-    private String issuedAt;
+    private String status; // PENDING_APPROVAL, APPROVED, ACTIVE, REVOKED
+
+    private Instant issuedAt;
 
     /* 🔍 Public verification */
     @Column(nullable = false, unique = true)
     private String verificationCode;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "issued_by_user_id")
-    private User issuedBy;
+    @ManyToOne
+    private CertificateBatch batch;
+
+    @Column(length = 2000)
+    private String merkleProof; // JSON array
 }
+
+
+
 

@@ -29,6 +29,9 @@ public class CardanoService {
     private TxBuilderService txBuilderService;
 
     @Autowired
+    MerkleService merkleService;
+
+    @Autowired
     private TransactionSigner transactionSigner;
 
     public Mono<String> anchorHash(String certificateHash) {
@@ -67,6 +70,22 @@ public class CardanoService {
                 });
     }
 
+    public Mono<Boolean> verifyMerkleInclusion(
+            String certHash,
+            String merkleProof,
+            String merkleRoot,
+            String batchTxHash
+    ) {
+        boolean included = merkleService.verify(
+                certHash,
+                merkleProof,
+                merkleRoot
+        );
+
+        return verifyHashAgainstTx(batchTxHash, merkleRoot)
+                .map(anchored -> included && anchored);
+    }
+
 
 
     private boolean metadataHasHash(JsonNode metadata, String certificateHash) {
@@ -79,8 +98,5 @@ public class CardanoService {
         }
         return false;
     }
-
-
-
 
 }

@@ -10,6 +10,8 @@ import java.util.List;
 public class BulkMintResult {
     private int total;
     private int minted;
-    private List<String> failedRows;
+    private String batchUid;
+    private List<CertificateIssuedDto> issuedCertificates;
+    //private List<String> failedRows;
 }
 
