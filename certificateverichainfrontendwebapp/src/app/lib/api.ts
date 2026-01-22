@@ -43,7 +43,7 @@ export async function apiFetch(
 
   if (res.status === 401 || res.status === 403) {
     localStorage.removeItem("token");
-    window.location.href = "auth/login";
+    window.location.href = "/auth/login";
     throw new Error("Session expired");
   }
 
